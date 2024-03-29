@@ -2,6 +2,7 @@ import tkinter as tk
 import tkinter.filedialog
 import os
 import random
+import sys
 
 playlists_directories = []
 lbls = []
@@ -43,7 +44,7 @@ def saveNewPlaylist():
     print("#EXTM3U",file=newPlaylistFile)
     for f in new_playlist:
         print(f, file=newPlaylistFile)
-    exit()
+    sys.exit(0)
 
 window = tk.Tk()
 
