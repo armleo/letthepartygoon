@@ -26,21 +26,21 @@ def newPlaylistSelect():
 
     
 def saveNewPlaylist():
-    saveNewPlaylistPath = tkinter.filedialog.asksaveasfilename(filetypes=[("m3u result playlist","*.m3u")])
+    saveNewPlaylistPath = tkinter.filedialog.asksaveasfilename(filetypes=[("m3u result playlist","*.m3u")], defaultextension="m3u")
     new_playlist = []
     done = False
     while not done:
         for p in playlists_directories:
             print("Working on ", p)
             if (len(playlists[p]) != 0):
-                new_playlist.append(os.path.join(p,playlists[p].pop()))
+                new_playlist.append(os.path.normpath(os.path.join(p,playlists[p].pop())))
             else:
                 print("Done", len(playlists[p]))
                 done = True
     
     print(new_playlist)
     print(saveNewPlaylistPath)
-    newPlaylistFile = open(saveNewPlaylistPath, "w+")
+    newPlaylistFile = open(saveNewPlaylistPath, "w+", encoding="utf-8")
     print("#EXTM3U",file=newPlaylistFile)
     for f in new_playlist:
         print(f, file=newPlaylistFile)
