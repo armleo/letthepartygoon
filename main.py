@@ -1,5 +1,3 @@
-import tkinter as tk
-import tkinter.filedialog
 import os
 import random
 import sys
@@ -24,8 +22,11 @@ print('sys.executable is', sys.executable)
 print('os.getcwd is', os.getcwd())
 
 playlists_directories = []
-lbls = []
 playlists = dict()
+
+def reset():
+    playlists_directories = []
+    playlists = dict()
 
 
 def addplaylist(dir):
@@ -38,34 +39,20 @@ def addplaylist(dir):
         random.shuffle(cont)
         playlists[dir] = cont
     
-def newPlaylistSelectButton():
-    dir = tkinter.filedialog.askdirectory()
-    
-    addplaylist(dir)
-
-    lbl = tk.Label(window,text=dir)
-    lbl.pack()
-    lbls.append(lbl)
-    
-
-def saveNewPlaylistButton():
-    saveNewPlaylistPath = tkinter.filedialog.asksaveasfilename(filetypes=[("m3u result playlist","*.m3u")], defaultextension="m3u")
-    saveplaylist(saveplaylist)
-    sys.exit(0)
 
 def saveplaylist(path):
     new_playlist = []
     done = False
     while not done:
+        done = True
         for p in playlists_directories:
+            done = False
             print("Working on ", p)
             if (len(playlists[p]) != 0):
                 new_playlist.append(os.path.normpath(os.path.join(p,playlists[p].pop())))
             else:
                 print("Done", len(playlists[p]))
                 done = True
-        else:
-            done = True
     print(new_playlist)
     print(path)
     newPlaylistFile = open(path, "w+", encoding="utf-8")
@@ -84,9 +71,7 @@ def b3s2k3():
     addplaylist("kiz")
     addplaylist("kiz")
 
-    saveplaylist("output.m3u")
-
-    sys.exit(0)
+    saveplaylist("b3s2k3.m3u")
 
 def b3s3():
     addplaylist("bachata")
@@ -96,23 +81,14 @@ def b3s3():
     addplaylist("salsa")
     addplaylist("salsa")
 
-    saveplaylist("output.m3u")
+    saveplaylist("b3s3.m3u")
 
-    sys.exit(0)
 
 
 os.makedirs("bachata", exist_ok=True)
 os.makedirs("kiz", exist_ok=True)
 os.makedirs("salsa", exist_ok=True)
 
+b3s2k3()
+b3s3()
 
-window = tk.Tk()
-
-button = tk.Button(window, text='3xBachata,2xSalsa,3xKiz', command=b3s2k3)
-button.pack()
-
-button = tk.Button(window, text='3xBachata,3xSalsa', command=b3s3)
-button.pack()
-
-
-window.mainloop()
