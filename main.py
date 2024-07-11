@@ -1,6 +1,8 @@
 import os
 import random
 import sys
+from pathlib import Path, PurePath
+import urllib
 
 frozen = 'not'
 if getattr(sys, 'frozen', False):
@@ -41,27 +43,27 @@ def addplaylist(dir):
     
 
 def saveplaylist(path):
-    new_playlist = []
+    newPlaylistFile = open(path, "w+", encoding="utf-8")
+    print("#EXTM3U",file=newPlaylistFile)
+    
     done = False
     while not done:
         done = True
         for p in playlists_directories:
-            done = False
             print("Working on ", p)
             if (len(playlists[p]) != 0):
-                new_playlist.append(os.path.normpath(os.path.join(p,playlists[p].pop())))
+                f = os.path.normpath(os.path.join(p,playlists[p].pop()))
+                print(urllib.parse.quote(f), file=newPlaylistFile)
+                done = False
             else:
                 print("Done", len(playlists[p]))
                 done = True
-    print(new_playlist)
-    print(path)
-    newPlaylistFile = open(path, "w+", encoding="utf-8")
-    print("#EXTM3U",file=newPlaylistFile)
-    for f in new_playlist:
-        print(f, file=newPlaylistFile)
+                break
     
 
 def b3s2k3():
+    reset()
+
     addplaylist("bachata")
     addplaylist("bachata")
     addplaylist("bachata")
@@ -74,6 +76,7 @@ def b3s2k3():
     saveplaylist("b3s2k3.m3u")
 
 def b3s3():
+    reset()
     addplaylist("bachata")
     addplaylist("bachata")
     addplaylist("bachata")
@@ -90,5 +93,5 @@ os.makedirs("kiz", exist_ok=True)
 os.makedirs("salsa", exist_ok=True)
 
 b3s2k3()
-b3s3()
+# b3s3()
 
