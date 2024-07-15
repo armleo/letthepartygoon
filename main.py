@@ -89,7 +89,55 @@ def b3s3():
 
     saveplaylist("b3s3.m3u")
 
+def b3s2():
+    reset()
+    addplaylist("bachata")
+    addplaylist("bachata")
+    addplaylist("bachata")
+    addplaylist("salsa")
+    addplaylist("salsa")
 
+    saveplaylist("b3s2.m3u")
+
+
+def b3s1():
+    reset()
+    addplaylist("bachata")
+    addplaylist("bachata")
+    addplaylist("bachata")
+    addplaylist("salsa")
+    
+
+    saveplaylist("b3s1.m3u")
+
+def b4s2():
+    reset()
+    addplaylist("bachata")
+    addplaylist("bachata")
+    addplaylist("bachata")
+    addplaylist("bachata")
+    addplaylist("salsa")
+    addplaylist("salsa")
+
+    saveplaylist("b4s2.m3u")
+
+def b4s2b4s2k1():
+    reset()
+    addplaylist("bachata")
+    addplaylist("bachata")
+    addplaylist("bachata")
+    addplaylist("bachata")
+    addplaylist("salsa")
+    addplaylist("salsa")
+    addplaylist("bachata")
+    addplaylist("bachata")
+    addplaylist("bachata")
+    addplaylist("bachata")
+    addplaylist("salsa")
+    addplaylist("salsa")
+    addplaylist("kiz")
+
+    saveplaylist("b4s2b4s2k1.m3u")
 
 os.makedirs("bachata", exist_ok=True)
 os.makedirs("kiz", exist_ok=True)
@@ -97,4 +145,6 @@ os.makedirs("salsa", exist_ok=True)
 
 b3s2k3()
 b3s3()
-
+b4s2()
+b3s1()
+b4s2b4s2k1()
