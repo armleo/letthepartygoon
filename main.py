@@ -27,6 +27,8 @@ playlists_directories = []
 playlists = dict()
 
 def reset():
+    global playlists_directories
+    global playlists
     playlists_directories = []
     playlists = dict()
 
@@ -59,6 +61,7 @@ def saveplaylist(path):
                 print("Done", len(playlists[p]))
                 done = True
                 break
+    newPlaylistFile.close()
     
 
 def b3s2k3():
@@ -93,5 +96,5 @@ os.makedirs("kiz", exist_ok=True)
 os.makedirs("salsa", exist_ok=True)
 
 b3s2k3()
-# b3s3()
+b3s3()
 
