@@ -33,15 +33,35 @@ def reset():
     playlists = dict()
 
 
-def addplaylist(dir):
+def addm3u(filepath, shuffle = True):
+    print(f"Reading {filepath}")
+    cont = []
+    with open(filepath, "r") as f:
+        lines = f.read().split("\n")
+        for l in lines:
+            if len(l) and l[0] == "#":
+                print(f"Ignoring line {l}")
+            elif len(l) > 0:
+                print(f"Adding song {l} from playlit")
+                cont.append(l)
+    playlists_directories.append(filepath)
+    playlists[filepath] = cont
+    print(cont)
+
+def addplaylist(dir, shuffle = True):
     
     print("Reading directory:", dir)
     cont = os.listdir(dir)
     print("Directory content:", len(cont), cont)
+    
     if len(cont) != 0:
         playlists_directories.append(dir)
-        random.shuffle(cont)
-        playlists[dir] = cont
+        playlists[dir] = []
+        if shuffle:
+            random.shuffle(cont)
+        
+        for c in cont:
+            playlists[dir].append(os.path.normpath(os.path.join(dir, c)))
     
 
 def saveplaylist(path):
@@ -54,8 +74,7 @@ def saveplaylist(path):
         for p in playlists_directories:
             print("Working on ", p)
             if (len(playlists[p]) != 0):
-                f = os.path.normpath(os.path.join(p,playlists[p].pop()))
-                print(urllib.parse.quote(f), file=newPlaylistFile)
+                print(urllib.parse.quote(playlists[p].pop()), file=newPlaylistFile)
                 done = False
             else:
                 print("Done", len(playlists[p]))
@@ -77,6 +96,22 @@ def b3s2k3():
     addplaylist("kiz")
 
     saveplaylist("b3s2k3.m3u")
+
+def exp():
+    reset()
+
+    addplaylist("bachata")
+    addplaylist("bachata")
+    addplaylist("bachata")
+    addplaylist("salsa")
+    addplaylist("salsa")
+    #addplaylist("kiz", False)
+    #addplaylist("kiz", False)
+    #addplaylist("kiz", False)
+    addm3u("kizpl.m3u", False)
+    addm3u("kizpl.m3u", False)
+    addm3u("kizpl.m3u", False)
+    saveplaylist("exp.m3u")
 
 def b3s3():
     reset()
@@ -143,8 +178,10 @@ os.makedirs("bachata", exist_ok=True)
 os.makedirs("kiz", exist_ok=True)
 os.makedirs("salsa", exist_ok=True)
 
+
 b3s2k3()
 b3s3()
 b4s2()
 b3s1()
 b4s2b4s2k1()
+exp()
