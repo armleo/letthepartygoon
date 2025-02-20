@@ -181,6 +181,7 @@ os.makedirs("salsa", exist_ok=True)
 
 b3s2k3()
 b3s3()
+b3s2()
 b4s2()
 b3s1()
 b4s2b4s2k1()
