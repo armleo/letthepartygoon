@@ -1,8 +1,15 @@
 import os
+import re
+import shutil
+import random
+
+
+import os
 import random
 import sys
 from pathlib import Path, PurePath
-import urllib
+
+
 
 frozen = 'not'
 if getattr(sys, 'frozen', False):
@@ -23,166 +30,120 @@ print('sys.argv[0] is', sys.argv[0])
 print('sys.executable is', sys.executable)
 print('os.getcwd is', os.getcwd())
 
-playlists_directories = []
-playlists = dict()
 
-def reset():
-    global playlists_directories
-    global playlists
-    playlists_directories = []
-    playlists = dict()
+# === Configuration ===
+INPUT_PLAYLIST_DIR = "input_playlist"
+EXTRA_SONGS_DIR = "./"
+OUTPUT_BASE_DIR = "final_playlist"
 
+GENRE_MAP = {"B": "bachata", "S": "salsa", "K": "kizomba"}
+REVERSE_GENRE = {v: k for k, v in GENRE_MAP.items()}
 
-def addm3u(filepath, shuffle = True):
-    print(f"Reading {filepath}")
-    cont = []
-    with open(filepath, "r") as f:
-        lines = f.read().split("\n")
-        for l in lines:
-            if len(l) and l[0] == "#":
-                print(f"Ignoring line {l}")
-            elif len(l) > 0:
-                print(f"Adding song {l} from playlit")
-                cont.append(l)
-    playlists_directories.append(filepath)
-    playlists[filepath] = cont
-    print(cont)
+PATTERNS = {
+    "b3s2k3": {"bachata": 3, "salsa": 2, "kizomba": 3},
+    "b3s1": {"bachata": 3, "salsa": 1},
+    "b3s2": {"bachata": 3, "salsa": 2}
+}
 
-def addplaylist(dir, shuffle = True):
-    
-    print("Reading directory:", dir)
-    cont = os.listdir(dir)
-    print("Directory content:", len(cont), cont)
-    
-    if len(cont) != 0:
-        playlists_directories.append(dir)
-        playlists[dir] = []
-        if shuffle:
-            random.shuffle(cont)
-        
-        for c in cont:
-            playlists[dir].append(os.path.normpath(os.path.join(dir, c)))
-    
+# === Helpers ===
 
-def saveplaylist(path):
-    newPlaylistFile = open(path, "w+", encoding="utf-8")
-    print("#EXTM3U",file=newPlaylistFile)
-    
-    done = False
-    while not done:
-        done = True
-        for p in playlists_directories:
-            print("Working on ", p)
-            if (len(playlists[p]) != 0):
-                print(urllib.parse.quote(playlists[p].pop()), file=newPlaylistFile)
-                done = False
-            else:
-                print("Done", len(playlists[p]))
-                done = True
-                break
-    newPlaylistFile.close()
-    
+def parse_input_playlist(folder):
+    songs = {"bachata": [], "salsa": [], "kizomba": []}
+    seen = set()
+    for fname in os.listdir(folder):
+        full_path = os.path.join(folder, fname)
+        if not os.path.isfile(full_path):
+            continue
+        match = re.match(r"^\d{1,3}([BSK])\s+(.+)", fname)
+        if match:
+            letter, name = match.groups()
+            genre = GENRE_MAP.get(letter)
+            if genre and name.lower() not in seen:
+                seen.add(name.lower())
+                songs[genre].append((name.strip(), full_path))
+    return songs
 
-def b3s2k3():
-    reset()
+def parse_genre_folder(genre_folder):
+    songs = []
+    seen = set()
+    for fname in os.listdir(genre_folder):
+        full_path = os.path.join(genre_folder, fname)
+        if os.path.isfile(full_path):
+            name = fname.strip()
+            if name.lower() not in seen:
+                seen.add(name.lower())
+                songs.append((name, full_path))
+    return songs
 
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("salsa")
-    addplaylist("salsa")
-    addplaylist("kiz")
-    addplaylist("kiz")
-    addplaylist("kiz")
+def merge_sources(primary, extras):
+    merged = {"bachata": [], "salsa": [], "kizomba": []}
+    seen = set()
+    for genre in merged:
+        all_songs = primary.get(genre, []) + extras.get(genre, [])
+        for name, path in all_songs:
+            if name.lower() not in seen:
+                merged[genre].append((name, path))
+                seen.add(name.lower())
+        random.shuffle(merged[genre])
+    return merged
 
-    saveplaylist("b3s2k3.m3u")
+def create_pattern_playlist(pattern_name, pattern_counts, all_songs):
+    output_dir = os.path.join(OUTPUT_BASE_DIR, pattern_name)
+    os.makedirs(output_dir, exist_ok=True)
+    playlist_entries = []
+    index = 1
+    local_songs = {g: all_songs[g][:] for g in all_songs}  # copy to avoid shared depletion
 
-def exp():
-    reset()
+    while True:
+        current_block = []
+        for genre, count in pattern_counts.items():
+            if len(local_songs[genre]) < count:
+                return playlist_entries
+            current_block += [(genre, local_songs[genre].pop(0)) for _ in range(count)]
 
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("salsa")
-    addplaylist("salsa")
-    #addplaylist("kiz", False)
-    #addplaylist("kiz", False)
-    #addplaylist("kiz", False)
-    addm3u("kizpl.m3u", False)
-    addm3u("kizpl.m3u", False)
-    addm3u("kizpl.m3u", False)
-    saveplaylist("exp.m3u")
+        for genre, (name, path) in current_block:
+            number = f"{index:03d}"
+            letter = REVERSE_GENRE[genre]
+            new_name = f"{number}{letter} {name}"
+            dst_path = os.path.join(output_dir, new_name)
+            shutil.copy2(path, dst_path)
+            playlist_entries.append(new_name)
+            index += 1
 
-def b3s3():
-    reset()
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("salsa")
-    addplaylist("salsa")
-    addplaylist("salsa")
+def write_m3u(playlist_entries, pattern_name):
+    m3u_path = os.path.join(OUTPUT_BASE_DIR, f'{pattern_name}.m3u')
+    with open(m3u_path, "w", encoding="utf-8") as f:
+        f.write("#EXTM3U\n")
+        for entry in playlist_entries:
+            match = re.match(r"^\d{1,3}([BSK])\s+(.+)", entry)
+            if match:
+                letter, name = match.groups()
+                genre = GENRE_MAP.get(letter)
+                f.write(f"#EXTINF:-1,{name}\n")
+            f.write(f"{pattern_name}/{entry}\n")
 
-    saveplaylist("b3s3.m3u")
+# === Main ===
 
-def b3s2():
-    reset()
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("salsa")
-    addplaylist("salsa")
+def main():
+    print("🎵 Loading input playlist...")
+    input_songs = parse_input_playlist(INPUT_PLAYLIST_DIR)
 
-    saveplaylist("b3s2.m3u")
+    print("🎵 Loading extra songs...")
+    extra_songs = {
+        "bachata": parse_genre_folder(os.path.join(EXTRA_SONGS_DIR, "bachata")),
+        "salsa": parse_genre_folder(os.path.join(EXTRA_SONGS_DIR, "salsa")),
+        "kizomba": parse_genre_folder(os.path.join(EXTRA_SONGS_DIR, "kizomba")),
+    }
 
+    print("🎵 Merging and shuffling songs...")
+    all_songs = merge_sources(input_songs, extra_songs)
 
-def b3s1():
-    reset()
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("salsa")
-    
+    for pattern_name, pattern in PATTERNS.items():
+        print(f"🎶 Generating playlist: {pattern_name}")
+        playlist = create_pattern_playlist(pattern_name, pattern, all_songs)
+        write_m3u(playlist, pattern_name)
 
-    saveplaylist("b3s1.m3u")
+    print("✅ All playlists created in:", OUTPUT_BASE_DIR)
 
-def b4s2():
-    reset()
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("salsa")
-    addplaylist("salsa")
-
-    saveplaylist("b4s2.m3u")
-
-def b4s2b4s2k1():
-    reset()
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("salsa")
-    addplaylist("salsa")
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("bachata")
-    addplaylist("salsa")
-    addplaylist("salsa")
-    addplaylist("kiz")
-
-    saveplaylist("b4s2b4s2k1.m3u")
-
-os.makedirs("bachata", exist_ok=True)
-os.makedirs("kiz", exist_ok=True)
-os.makedirs("salsa", exist_ok=True)
-
-
-b3s2k3()
-b3s3()
-b3s2()
-b4s2()
-b3s1()
-b4s2b4s2k1()
-exp()
+if __name__ == "__main__":
+    main()

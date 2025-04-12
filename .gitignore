@@ -3,6 +3,9 @@ build/
 bachata/
 salsa/
 kiz/
+kizomba/
+input_playlist/
+final_playlist/
 *.m3u
 *.m3u8
 .DS_Store
